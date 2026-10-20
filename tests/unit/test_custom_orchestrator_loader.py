@@ -2,6 +2,7 @@
 # Copyright (c) 2024-2026 Humanbound
 """Custom orchestrators loaded from ~/.humanbound/orchestrators/<name>/."""
 
+import os
 import sys
 
 import pytest
@@ -91,7 +92,12 @@ def test_reload_picks_up_edits(orchestrators_dir):
     _write_documented_layout(path)
     _load_orchestrator("my_orch")
 
-    (path / "config.py").write_text("CATEGORY = 'edited001'\n")
+    config = path / "config.py"
+    mtime = config.stat().st_mtime
+    config.write_text("CATEGORY = 'edited001'\n")
+    # A same-size rewrite within the same second would reuse the cached .pyc
+    # (validated by whole-second mtime + size); a real edit comes later.
+    os.utime(config, (mtime + 2, mtime + 2))
     module = _load_orchestrator("my_orch")
 
     assert module.orchestrator_generate({}, {}) == {"edited001": ["Hi there"]}
