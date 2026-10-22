@@ -15,8 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   failed with `attempted relative import with no known parent package` (or
   `No module named 'generator'`), so only a single self-contained
   `orchestrator.py` could run. A custom orchestrator missing
-  `orchestrator_generate`, `orchestrator_run` or `compute_quota` is now
-  reported by name, and the unknown-orchestrator error points at the custom
+  `orchestrator_generate` or `orchestrator_run` is now reported by name, and the unknown-orchestrator error points at the custom
   directory instead of a nonexistent `hb orchestrators install` command.
 
 ## [2.13.0] — 2026-10-02

@@ -27,6 +27,10 @@ logger = logging.getLogger("humanbound.engine.local")
 # default (Azure needs the deployment name), so they require an explicit model.
 DEFAULT_MODELS = {"openai": "gpt-4.1", "ollama": "llama3.1:8b"}
 
+# What a custom orchestrator must define: the functions the runner calls.
+# compute_quota is part of the built-in contract but `hb test` does not call it.
+CUSTOM_ORCHESTRATOR_FUNCTIONS = ("orchestrator_generate", "orchestrator_run")
+
 
 def _ensure_private_dir(path: Path) -> None:
     """Create ``path`` (and parents) with owner-only (0700) permissions.
@@ -555,9 +559,6 @@ def _load_orchestrator(test_category: str):
         )
 
 
-CUSTOM_ORCHESTRATOR_FUNCTIONS = ("orchestrator_generate", "orchestrator_run", "compute_quota")
-
-
 def _load_custom_orchestrator(short: str, custom_path: Path):
     """Import ``custom_path`` as a package and return its ``orchestrator`` submodule.
 
@@ -582,7 +583,8 @@ def _load_custom_orchestrator(short: str, custom_path: Path):
         spec = importlib.util.spec_from_file_location(
             pkg_name, str(init_file), submodule_search_locations=[str(custom_path)]
         )
-        assert spec is not None and spec.loader is not None
+        if spec is None or spec.loader is None:
+            raise ValueError(f"Could not load custom orchestrator package from {init_file}")
         package = importlib.util.module_from_spec(spec)
         sys.modules[pkg_name] = package
         spec.loader.exec_module(package)

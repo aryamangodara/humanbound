@@ -108,8 +108,21 @@ def test_missing_interface_function_is_reported(orchestrators_dir):
     path.mkdir()
     (path / "orchestrator.py").write_text("def orchestrator_generate(p, e):\n    return {}\n")
 
-    with pytest.raises(ValueError, match="does not define: orchestrator_run, compute_quota"):
+    with pytest.raises(ValueError, match="does not define: orchestrator_run$"):
         _load_orchestrator("my_orch")
+
+
+def test_compute_quota_is_optional(orchestrators_dir):
+    path = orchestrators_dir / "my_orch"
+    path.mkdir()
+    (path / "orchestrator.py").write_text(
+        "def orchestrator_generate(p, e):\n    return {}\n\n\n"
+        "def orchestrator_run(*args, **kwargs):\n    return None\n"
+    )
+
+    module = _load_orchestrator("my_orch")
+
+    assert module.orchestrator_generate({}, {}) == {}
 
 
 def test_unknown_orchestrator_points_at_the_custom_directory(orchestrators_dir):
